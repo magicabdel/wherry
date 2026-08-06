@@ -39,6 +39,11 @@ main() {
   esac
 
   target="${arch}-${os}"
+
+  # Only Apple Silicon builds are published for macOS.
+  if [ "$target" = "x86_64-apple-darwin" ]; then
+    err "no prebuilt binary for Intel macOS; install with 'cargo install wherry' instead"
+  fi
   url="https://github.com/${REPO}/releases/latest/download/wherry-${target}.tar.gz"
 
   tmp="$(mktemp -d)"

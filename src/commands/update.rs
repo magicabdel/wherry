@@ -86,14 +86,15 @@ fn parse_version(version: &str) -> Option<(u64, u64, u64)> {
 /// The release artifact target triple for the running platform, matching the
 /// names produced by the release workflow (and expected by `install.sh`).
 fn release_target() -> Result<String> {
+    let os = std::env::consts::OS;
     let arch = std::env::consts::ARCH;
-    if !matches!(arch, "x86_64" | "aarch64") {
-        bail!("no prebuilt wherry release for architecture '{arch}'");
-    }
-    match std::env::consts::OS {
-        "linux" => Ok(format!("{arch}-unknown-linux-musl")),
-        "macos" => Ok(format!("{arch}-apple-darwin")),
-        os => Err(anyhow!("no prebuilt wherry release for OS '{os}'")),
+    match (os, arch) {
+        ("linux", "x86_64" | "aarch64") => Ok(format!("{arch}-unknown-linux-musl")),
+        // Only Apple Silicon builds are published for macOS.
+        ("macos", "aarch64") => Ok(format!("{arch}-apple-darwin")),
+        _ => Err(anyhow!(
+            "no prebuilt wherry release for {os}/{arch}; try 'cargo install wherry' instead"
+        )),
     }
 }
 
