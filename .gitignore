@@ -1,0 +1,19 @@
+# Specific .gitignore to protect sensible credentials
+# ---------------------------------------------------
+conf/*.y*ml
+conf/*.json
+*.pypirc
+
+# Rust
+# ----
+/target
+**/*.rs.bk
+*.pdb
+
+# Environments
+.env
+
+# Editors
+/.idea
+.vscode
+**/nohup.out

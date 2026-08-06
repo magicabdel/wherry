@@ -1,0 +1,35 @@
+[package]
+name = "wherry"
+version = "0.1.0"
+edition = "2021"
+description = "Configure kubectl access to (private) EKS clusters via an automatic bastion bridge"
+authors = ["Abdessalam ZAIMI <abdessalam@zaimi.dev>"]
+repository = "https://github.com/magicabdel/wherry"
+readme = "README.md"
+
+[[bin]]
+name = "wherry"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "macros"] }
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+dialoguer = "0.11"
+ssh-key = { version = "0.6", features = ["ed25519", "getrandom"] }
+russh = "0.61"
+daemonize = "0.5"
+sha1 = "0.10"
+
+aws-config = { version = "1", features = ["behavior-version-latest"] }
+aws-sdk-eks = "1"
+aws-sdk-autoscaling = "1"
+aws-sdk-ec2instanceconnect = "1"
+aws-sdk-elasticloadbalancingv2 = "1"
+aws-sdk-resourcegroupstagging = "1"
+
+[profile.release]
+strip = true
+lto = true
