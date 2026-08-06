@@ -33,7 +33,7 @@ curl -fsSL https://raw.githubusercontent.com/magicabdel/wherry/main/install.sh |
 Or with Cargo:
 
 ```sh
-cargo install --git https://github.com/magicabdel/wherry
+cargo install wherry
 ```
 
 ## Quick start
@@ -68,6 +68,7 @@ wherry bridge start        # open a bastion bridge by hand
 wherry bridge stop [--all] # tear bridges down (they run as daemons)
 wherry sso login           # refresh an AWS SSO token manually
 wherry sso status          # freshness of every configured session/profile
+wherry update              # update wherry itself to the latest release
 ```
 
 Everything is interactive when arguments are omitted; `wherry --help` shows

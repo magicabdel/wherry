@@ -33,6 +33,8 @@ enum Command {
         #[command(subcommand)]
         cmd: SsoCmd,
     },
+    /// Update wherry itself to the latest released version
+    Update,
 }
 
 #[derive(Args)]
@@ -146,5 +148,6 @@ fn main() -> Result<()> {
             SsoCmd::Login(args) => commands::sso::login(args.profile, args.session, args.quiet),
             SsoCmd::Status(args) => commands::sso::status(args.profile, args.session),
         },
+        Command::Update => commands::update::update(),
     }
 }

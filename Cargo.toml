@@ -7,6 +7,7 @@ license = "MIT"
 authors = ["Abdessalam ZAIMI <abdessalam@zaimi.dev>"]
 repository = "https://github.com/magicabdel/wherry"
 readme = "README.md"
+exclude = [".github/", "docs/", "install.sh"]
 
 [[bin]]
 name = "wherry"
@@ -23,6 +24,13 @@ ssh-key = { version = "0.6", features = ["ed25519", "getrandom"] }
 russh = "0.61"
 daemonize = "0.5"
 sha1 = "0.10"
+
+# self-update (sha2, flate2 and hex are already in the tree via the AWS SDK)
+ureq = "2"
+tar = "0.4"
+flate2 = "1"
+sha2 = "0.10"
+hex = "0.4"
 
 aws-config = { version = "1", features = ["behavior-version-latest"] }
 aws-sdk-eks = "1"

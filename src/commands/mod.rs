@@ -1,6 +1,7 @@
 pub mod bridge;
 pub mod kubeconfig;
 pub mod sso;
+pub mod update;
 
 use std::net::TcpListener;
 
