@@ -3,6 +3,7 @@ name = "wherry"
 version = "0.1.0"
 edition = "2021"
 description = "Configure kubectl access to (private) EKS clusters via an automatic bastion bridge"
+license = "MIT"
 authors = ["Abdessalam ZAIMI <abdessalam@zaimi.dev>"]
 repository = "https://github.com/magicabdel/wherry"
 readme = "README.md"
