@@ -1,6 +1,6 @@
 [package]
 name = "wherry"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Configure kubectl access to (private) EKS clusters via an automatic bastion bridge"
 license = "MIT"
@@ -15,7 +15,7 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
-tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "macros"] }
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "macros", "sync"] }
 anyhow = "1"
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"

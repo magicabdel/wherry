@@ -197,8 +197,17 @@ fn log_file() -> Option<std::fs::File> {
         .ok()
 }
 
+/// How often the serve loop verifies that the SSH session is still alive.
+const SESSION_WATCHDOG_INTERVAL: Duration = Duration::from_secs(2);
+
 /// Connect to the bastion and serve SOCKS5 connections until the process is
-/// killed.
+/// killed or the SSH session to the bastion is lost.
+///
+/// Losing the session is fatal on purpose: keys pushed via EC2 Instance
+/// Connect expire after 60 seconds, so the daemon cannot silently reconnect
+/// on its own. Exiting releases the port and PID file, and the next
+/// `wherry bridge start` (run automatically by the kube config exec plugin)
+/// re-pushes the key and brings up a fresh bridge.
 async fn serve(listener: std::net::TcpListener, params: BridgeParams) -> Result<()> {
     listener
         .set_nonblocking(true)
@@ -208,8 +217,12 @@ async fn serve(listener: std::net::TcpListener, params: BridgeParams) -> Result<
     let key = load_secret_key(&params.key_path, None)
         .with_context(|| format!("failed to load key {}", params.key_path.display()))?;
 
+    // Aggressive keepalives so a dead connection (bastion idle timeout, NAT
+    // expiry, suspend/resume) is noticed within about a minute instead of
+    // leaving a zombie bridge behind. russh gives up after `keepalive_max`
+    // (default 3) unanswered probes and tears the session down.
     let config = Arc::new(client::Config {
-        keepalive_interval: Some(Duration::from_secs(60)),
+        keepalive_interval: Some(Duration::from_secs(15)),
         ..Default::default()
     });
 
@@ -231,18 +244,45 @@ async fn serve(listener: std::net::TcpListener, params: BridgeParams) -> Result<
 
     let handle = Arc::new(handle);
 
+    // Signalled by connection handlers that fail because the session is gone,
+    // so the daemon exits immediately instead of waiting for the watchdog.
+    let session_lost = Arc::new(tokio::sync::Notify::new());
+    let mut watchdog = tokio::time::interval(SESSION_WATCHDOG_INTERVAL);
+
     loop {
-        let (inbound, peer) = listener
-            .accept()
-            .await
-            .context("failed to accept SOCKS connection")?;
-        let session = handle.clone();
-        tokio::spawn(async move {
-            if let Err(e) = handle_socks(inbound, peer, session).await {
-                eprintln!("socks connection error: {e:#}");
+        tokio::select! {
+            accepted = listener.accept() => {
+                let (inbound, peer) = accepted.context("failed to accept SOCKS connection")?;
+                let session = handle.clone();
+                let session_lost = session_lost.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = handle_socks(inbound, peer, session.clone()).await {
+                        eprintln!("socks connection error: {e:#}");
+                        if session.is_closed() {
+                            session_lost.notify_one();
+                        }
+                    }
+                });
             }
-        });
+            _ = watchdog.tick() => {
+                if handle.is_closed() {
+                    bail!(session_lost_error(&params.host));
+                }
+            }
+            _ = session_lost.notified() => {
+                bail!(session_lost_error(&params.host));
+            }
+        }
     }
+}
+
+/// Error message for a lost SSH session; the daemon exits with it so the
+/// exec plugin can transparently start a replacement bridge.
+fn session_lost_error(host: &str) -> String {
+    format!(
+        "SSH session to bastion {host} was lost; exiting so the next \
+         `wherry bridge start` (or kubectl call) starts a fresh bridge"
+    )
 }
 
 /// Handle a single SOCKS5 client: negotiate, then splice it to a `direct-tcpip`
